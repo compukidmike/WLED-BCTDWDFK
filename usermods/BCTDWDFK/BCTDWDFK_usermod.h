@@ -21,7 +21,7 @@
  */
 
 //class name. Use something descriptive and leave the ": public Usermod" part :)
-class MyExampleUsermod : public Usermod {
+class UsermodBCTDWDFK : public Usermod {
 
   private:
 
@@ -386,13 +386,13 @@ class MyExampleUsermod : public Usermod {
 
 
 // add more strings here to reduce flash memory usage
-const char MyExampleUsermod::_name[]    PROGMEM = "ExampleUsermod";
-const char MyExampleUsermod::_enabled[] PROGMEM = "enabled";
+const char UsermodBCTDWDFK::_name[]    PROGMEM = "ExampleUsermod";
+const char UsermodBCTDWDFK::_enabled[] PROGMEM = "enabled";
 
 
 // implementation of non-inline member methods
 
-void MyExampleUsermod::publishMqtt(const char* state, bool retain)
+void UsermodBCTDWDFK::publishMqtt(const char* state, bool retain)
 {
 #ifndef WLED_DISABLE_MQTT
   //Check if MQTT Connected, otherwise it will crash the 8266
