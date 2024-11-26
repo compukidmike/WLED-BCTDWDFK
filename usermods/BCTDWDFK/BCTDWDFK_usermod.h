@@ -1,6 +1,42 @@
 #pragma once
 
 #include "wled.h"
+#include <TFT_eSPI.h>
+#include <LittleFS.h>
+//#include <AnimatedGIF.h>
+
+#define ST7735_DRIVER
+#define TFT_WIDTH  128
+#define TFT_HEIGHT 128
+
+#define TFT1_MOSI  8
+#define TFT1_SCLK  9
+#define TFT1_CS   20
+#define TFT1_DC   18
+#define TFT1_RST   7
+#define TFT1_BL    21
+
+#define TFT2_MOSI  24
+#define TFT2_SCLK  23
+#define TFT2_CS   29
+#define TFT2_DC   26
+#define TFT2_RST   25
+#define TFT2_BL    30
+
+// Create display object
+TFT_eSPI tft1 = TFT_eSPI();
+TFT_eSPI tft2 = TFT_eSPI();
+
+
+// Function to draw a frame from the GIF
+//void drawGIFFrame(void *p, int x, int y, int w, int h, uint8_t *bitmap) {
+//    tft1.pushImage(x, y, w, h, (uint16_t*)bitmap);
+//}
+
+// Function to draw a frame from the GIF
+//void drawGIFFrame(void *p, int x, int y, int w, int h, uint8_t *bitmap) {
+//    tft2.pushImage(x, y, w, h, (uint16_t*)bitmap);
+//}
 
 /*
  * Usermods allow you to add own functionality to WLED more easily
@@ -87,9 +123,41 @@ class UsermodBCTDWDFK : public Usermod {
      * readFromConfig() is called prior to setup()
      * You can use it to initialize variables, sensors or similar.
      */
+
+
+     void updateDisplay() {
+        tft.fillScreen(TFT_BLACK); // Clear the screen
+
+        if (displayState == 0) {
+            tft.setCursor(10, 30); // Set cursor at position X=10, Y=30
+            tft.print("Hello World 1");
+        } else {
+            tft.setCursor(10, 30); // Set cursor at position X=10, Y=30
+            tft.print("Hello World 2");
+        }
+    }
+
     void setup() {
       // do your set-up here
       //Serial.println("Hello from my usermod!");
+      // Initialize the display
+        tft1.init();
+        tft1.setRotation(1); // Adjust rotation as needed
+        tft1.fillScreen(TFT_BLACK);
+
+        // Set text properties
+        tft1.setTextColor(TFT_WHITE, TFT_BLACK); // White text with black background
+        tft1.setTextSize(2); // Text size
+        updateDisplay();
+
+        tft2.init();
+        tft2.setRotation(1); // Adjust rotation as needed
+        tft2.fillScreen(TFT_BLACK);
+
+        // Set text properties
+        tft2.setTextColor(TFT_WHITE, TFT_BLACK); // White text with black background
+        tft2.setTextSize(2); // Text size
+        updateDisplay();
       initDone = true;
     }
 
@@ -118,10 +186,10 @@ class UsermodBCTDWDFK : public Usermod {
       // NOTE: on very long strips strip.isUpdating() may always return true so update accordingly
       if (!enabled || strip.isUpdating()) return;
 
-      // do your magic here
-      if (millis() - lastTime > 1000) {
-        //Serial.println("I'm alive!");
-        lastTime = millis();
+ if (millis() - lastUpdate > 5000) {
+            displayState = (displayState + 1) % 2; // Toggle between 0 and 1
+            updateDisplay();
+            lastUpdate = millis();
       }
     }
 
