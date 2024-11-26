@@ -9,19 +9,19 @@
 #define TFT_WIDTH  128
 #define TFT_HEIGHT 128
 
-#define TFT1_MOSI  8
-#define TFT1_SCLK  9
-#define TFT1_CS   20
-#define TFT1_DC   18
-#define TFT1_RST   7
-#define TFT1_BL    21
+#define TFT1_MOSI  25
+#define TFT1_SCLK  26
+#define TFT1_CS   4
+#define TFT1_DC   15
+#define TFT1_RST   33
+#define TFT1_BL    16
 
-#define TFT2_MOSI  24
-#define TFT2_SCLK  23
-#define TFT2_CS   29
-#define TFT2_DC   26
-#define TFT2_RST   25
-#define TFT2_BL    30
+#define TFT2_MOSI  18
+#define TFT2_SCLK  5
+#define TFT2_CS   22
+#define TFT2_DC   21
+#define TFT2_RST   19
+#define TFT2_BL    23
 
 // Create display object
 TFT_eSPI tft1 = TFT_eSPI();
