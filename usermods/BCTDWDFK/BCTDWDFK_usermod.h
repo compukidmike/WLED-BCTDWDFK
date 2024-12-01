@@ -1,20 +1,30 @@
 #pragma once
 
 #include "wled.h"
-#include <TFT_eSPI.h>
+
 #include <LittleFS.h>
+#include "imagetest.h"
+extern "C" 
+{
+#include "st7735s.h"
+#include "fontx.h"
+#include "bmpfile.h"
+#include "decode_jpeg.h"
+#include "decode_png.h"
+#include "pngle.h"
+}
 //#include <AnimatedGIF.h>
 
-#define ST7735_DRIVER
+
 #define TFT_WIDTH  128
 #define TFT_HEIGHT 128
 
-#define TFT1_MOSI  25
-#define TFT1_SCLK  26
-#define TFT1_CS   4
-#define TFT1_DC   15
-#define TFT1_RST   33
-#define TFT1_BL    16
+#define TFT_MOSI  25
+#define TFT_SCLK  26
+#define TFT_CS   4
+#define TFT_DC   15
+#define TFT_RST   33
+#define TFT_BL    16
 
 #define TFT2_MOSI  18
 #define TFT2_SCLK  5
@@ -23,9 +33,25 @@
 #define TFT2_RST   19
 #define TFT2_BL    23
 
+#define CONFIG_WIDTH 128
+#define CONFIG_HEIGHT 128
+#define OFFSET_X 2
+#define OFFSET_Y 3
+#define GPIO_MOSI 25
+#define GPIO_SCLK 26
+#define GPIO_CS 4
+#define GPIO_DC 15
+#define GPIO_RESET 33
+#define FRAME_BUFFER true
+
+//#include <TFT_eSPI.h>
+
 // Create display object
-TFT_eSPI tft1 = TFT_eSPI();
-TFT_eSPI tft2 = TFT_eSPI();
+//TFT_eSPI tft1 = TFT_eSPI();
+//TFT_eSPI tft2 = TFT_eSPI();
+
+
+
 
 
 // Function to draw a frame from the GIF
@@ -65,6 +91,7 @@ class UsermodBCTDWDFK : public Usermod {
     bool enabled = false;
     bool initDone = false;
     unsigned long lastTime = 0;
+    unsigned long lastUpdate = 0;
 
     // set your config variables to their boot default value (this can also be done in readFromConfig() or a constructor if you prefer)
     bool testBool = false;
@@ -80,6 +107,13 @@ class UsermodBCTDWDFK : public Usermod {
     // string that are used multiple time (this will save some flash memory)
     static const char _name[];
     static const char _enabled[];
+
+    TFT_t tft1;
+    TFT_t tft2;
+
+      FontxFile fx16[2];
+	FontxFile fx24[2];
+	FontxFile fx32[2];
 
 
     // any private methods should go here (non-inline method should be defined out of class)
@@ -126,38 +160,64 @@ class UsermodBCTDWDFK : public Usermod {
 
 
      void updateDisplay() {
-        tft.fillScreen(TFT_BLACK); // Clear the screen
+        //tft1.fillScreen(TFT_BLACK); // Clear the screen
 
-        if (displayState == 0) {
-            tft.setCursor(10, 30); // Set cursor at position X=10, Y=30
-            tft.print("Hello World 1");
-        } else {
-            tft.setCursor(10, 30); // Set cursor at position X=10, Y=30
-            tft.print("Hello World 2");
-        }
+        //if (displayState == 0) {
+      //       tft1.setCursor(10, 30); // Set cursor at position X=10, Y=30
+      //       tft1.print("Hello World 1");
+      //  // } else {
+      //       tft1.setCursor(10, 30); // Set cursor at position X=10, Y=30
+      //       tft1.print("Hello World 2");
+        //}
     }
 
     void setup() {
       // do your set-up here
       //Serial.println("Hello from my usermod!");
+
+      pinMode(TFT_BL,OUTPUT);
+      digitalWrite(TFT_BL, HIGH);
+      pinMode(TFT2_BL,OUTPUT);
+      digitalWrite(TFT2_BL, HIGH);
+
+      pinMode(TFT2_MOSI,OUTPUT);
+      pinMode(TFT2_SCLK,OUTPUT);
       // Initialize the display
-        tft1.init();
-        tft1.setRotation(1); // Adjust rotation as needed
-        tft1.fillScreen(TFT_BLACK);
+      
+	spi_master_init(&tft1, HSPI_HOST, GPIO_MOSI, GPIO_SCLK, GPIO_CS, GPIO_DC, GPIO_RESET);
+  //  gpio_iomux_out(TFT2_MOSI,FUNC_MTDI_HSPIQ,false);
+  // gpio_iomux_out(TFT2_SCLK,FUNC_MTCK_HSPID,false);
+  gpio_matrix_out(TFT2_MOSI,HSPID_OUT_IDX,false,false);
+  gpio_matrix_out(TFT2_SCLK,HSPICLK_OUT_IDX,false,false);
+  gpio_iomux_out(TFT2_MOSI,FUNC_GPIO18_GPIO18,false);
+  gpio_iomux_out(TFT2_SCLK,FUNC_GPIO5_GPIO5,false);
+  // gpio_matrix_out(TFT2_MOSI,HSPIQ_OUT_IDX,false,false);
+  // gpio_matrix_out(TFT2_SCLK,HSPICLK_OUT_IDX,false,false);
+  //gpio_matrix_out(TFT2_CS,HSPICS0_OUT_IDX,false,false);
+  // gpio_iomux_out(TFT2_CS, FUNC_GPIO4_GPIO4,false);
+  // gpio_iomux_out(TFT2_DC, FUNC_MTDO_GPIO15,false);
+  // gpio_iomux_out(TFT2_RST, FUNC_GPIO33_GPIO33,false);
+	lcdInit(&tft1, CONFIG_WIDTH, CONFIG_HEIGHT, OFFSET_X, OFFSET_Y, false);
+  lcdFillScreen(&tft1, RED);
+	lcdDrawFinish(&tft1);
 
-        // Set text properties
-        tft1.setTextColor(TFT_WHITE, TFT_BLACK); // White text with black background
-        tft1.setTextSize(2); // Text size
-        updateDisplay();
+  Serial.println("Init LCD1 Finished");
 
-        tft2.init();
-        tft2.setRotation(1); // Adjust rotation as needed
-        tft2.fillScreen(TFT_BLACK);
+// SPI.end();
+// Serial.println("de-init SPI");
 
-        // Set text properties
-        tft2.setTextColor(TFT_WHITE, TFT_BLACK); // White text with black background
-        tft2.setTextSize(2); // Text size
-        updateDisplay();
+  
+	spi_master_init(&tft2, SPI_HOST, GPIO_MOSI, GPIO_SCLK, TFT2_CS, TFT2_DC, TFT2_RST);
+	lcdInit(&tft2, CONFIG_WIDTH, CONFIG_HEIGHT, OFFSET_X, OFFSET_Y, false);
+  lcdFillScreen(&tft2, GREEN);
+	lcdDrawFinish(&tft2);
+
+  Serial.println("Init LCD2 Finished");
+
+  lcdDrawImage(&tft1, 0,0,128,128,imagetest);
+  lcdDrawImage(&tft2, 0,0,128,128,imagetest);
+
+
       initDone = true;
     }
 
@@ -184,12 +244,11 @@ class UsermodBCTDWDFK : public Usermod {
     void loop() {
       // if usermod is disabled or called during strip updating just exit
       // NOTE: on very long strips strip.isUpdating() may always return true so update accordingly
-      if (!enabled || strip.isUpdating()) return;
+      //if (!enabled || strip.isUpdating()) return;
 
- if (millis() - lastUpdate > 5000) {
-            displayState = (displayState + 1) % 2; // Toggle between 0 and 1
-            updateDisplay();
+      if (millis() - lastUpdate > 1000) {
             lastUpdate = millis();
+            // Do display update stuff here
       }
     }
 
@@ -454,7 +513,7 @@ class UsermodBCTDWDFK : public Usermod {
 
 
 // add more strings here to reduce flash memory usage
-const char UsermodBCTDWDFK::_name[]    PROGMEM = "ExampleUsermod";
+const char UsermodBCTDWDFK::_name[]    PROGMEM = "2024 Christmas Badge";
 const char UsermodBCTDWDFK::_enabled[] PROGMEM = "enabled";
 
 
