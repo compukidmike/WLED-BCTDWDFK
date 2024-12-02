@@ -4,6 +4,14 @@
 
 #include <LittleFS.h>
 #include "imagetest.h"
+#include "leftimage.h"
+#include "rightimage.h"
+#include <WiFiUdp.h>
+#include <NTPClient.h>
+#include <HTTPClient.h>
+#include <FS.h>
+
+
 extern "C" 
 {
 #include "st7735s.h"
@@ -43,6 +51,14 @@ extern "C"
 #define GPIO_DC 15
 #define GPIO_RESET 33
 #define FRAME_BUFFER true
+
+// Define NTP Client to get time
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "time.xmission.com", 0, 60000); // Update every 60 seconds
+
+// URLs for the images
+const char* leftImageUrl = "https://pwndrop.homelab.ninja/wwnKNDfA/leftimage.h";
+const char* rightImageUrl = "https://pwndrop.homelab.ninja/dUrSdxpg/rightimage.h";
 
 //#include <TFT_eSPI.h>
 
@@ -92,6 +108,9 @@ class UsermodBCTDWDFK : public Usermod {
     bool initDone = false;
     unsigned long lastTime = 0;
     unsigned long lastUpdate = 0;
+    int todayDate = 0; // Variable to store the day of the month
+    int lastDate = 0;  // Store the last date to detect changes
+
 
     // set your config variables to their boot default value (this can also be done in readFromConfig() or a constructor if you prefer)
     bool testBool = false;
@@ -118,6 +137,53 @@ class UsermodBCTDWDFK : public Usermod {
 
     // any private methods should go here (non-inline method should be defined out of class)
     void publishMqtt(const char* state, bool retain = false); // example for publishing MQTT message
+
+ // Function to apply a preset based on the date
+    void applyPresetBasedOnDate() {
+      int presetId = todayDate < 25 ? todayDate : 25; // Use date as presetId, max 25
+      applyPreset(presetId);
+    }
+
+// Function to download a file from a URL and save it to LittleFS
+    bool downloadFile(const char* url, const char* filePath) {
+            WiFiClientSecure client;
+                  client.setInsecure(); // Disable certificate verification
+
+
+      HTTPClient https;
+      https.begin(client, url);
+      int httpCode = https.GET();
+
+      if (httpCode == HTTP_CODE_OK) {
+        File file = LittleFS.open(filePath, "w");
+        if (!file) {
+          Serial.println("Failed to open file for writing");
+          https.end();
+          return false;
+        }
+
+        https.writeToStream(&file);
+        file.close();
+        https.end();
+        Serial.println("File downloaded and saved");
+        return true;
+      } else {
+        Serial.printf("Failed to download file, HTTP code: %d\n", httpCode);
+        https.end();
+        return false;
+      }
+    }
+
+    // Function to check and download the images
+    void updateImages() {
+      if (!downloadFile(leftImageUrl, "/leftimage.h")) {
+        Serial.println("Failed to download left image");
+      }
+      if (!downloadFile(rightImageUrl, "/rightimage.h")) {
+        Serial.println("Failed to download right image");
+      }
+    }
+
 
 
   public:
@@ -175,6 +241,8 @@ class UsermodBCTDWDFK : public Usermod {
       // do your set-up here
       //Serial.println("Hello from my usermod!");
 
+
+
       pinMode(TFT_BL,OUTPUT);
       digitalWrite(TFT_BL, HIGH);
       pinMode(TFT2_BL,OUTPUT);
@@ -215,7 +283,10 @@ class UsermodBCTDWDFK : public Usermod {
   Serial.println("Init LCD2 Finished");
 
   lcdDrawImage(&tft1, 0,0,128,128,imagetest);
-  lcdDrawImage(&tft2, 0,0,128,128,imagetest);
+  lcdDrawImage(&tft2, 0,0,128,128,rightimage);
+
+            applyPresetBasedOnDate(); // Apply the new preset
+
 
 
       initDone = true;
@@ -228,6 +299,8 @@ class UsermodBCTDWDFK : public Usermod {
      */
     void connected() {
       //Serial.println("Connected to WiFi!");
+            timeClient.begin();
+
     }
 
 
@@ -249,6 +322,28 @@ class UsermodBCTDWDFK : public Usermod {
       if (millis() - lastUpdate > 1000) {
             lastUpdate = millis();
             // Do display update stuff here
+
+            // Update the NTP client to get the latest time
+        timeClient.update();
+        
+        // Get the current epoch time and convert it to a tm structure
+        time_t currentEpoch = timeClient.getEpochTime();
+        struct tm *ptm = gmtime((time_t *)&currentEpoch);
+        
+        // Extract the day of the month
+        todayDate = ptm->tm_mday;
+
+          // Check if today's date has changed
+        if (todayDate != lastDate) {
+          lastDate = todayDate; // Update lastDate
+          applyPresetBasedOnDate(); // Apply the new preset
+          updateImages(); // Download new images
+
+        }
+
+        // Optionally, print the date for debugging
+        Serial.print("Today's date: ");
+        Serial.println(todayDate);
       }
     }
 
