@@ -237,6 +237,27 @@ class UsermodBCTDWDFK : public Usermod {
         //}
     }
 
+    void updateTime() {
+      timeClient.update();
+        
+        // Get the current epoch time and convert it to a tm structure
+        time_t currentEpoch = timeClient.getEpochTime();
+        struct tm *ptm = gmtime((time_t *)&currentEpoch);
+        
+        // Extract the day of the month
+        todayDate = ptm->tm_mday;
+
+          // Check if today's date has changed
+        if (todayDate != lastDate) {
+          lastDate = todayDate; // Update lastDate
+          applyPresetBasedOnDate(); // Apply the new preset
+        }
+
+        // Optionally, print the date for debugging
+        Serial.print("Today's date: ");
+        Serial.println(todayDate);
+    }
+
     void setup() {
       // do your set-up here
       //Serial.println("Hello from my usermod!");
@@ -252,45 +273,43 @@ class UsermodBCTDWDFK : public Usermod {
       pinMode(TFT2_SCLK,OUTPUT);
       // Initialize the display
       
-	spi_master_init(&tft1, HSPI_HOST, GPIO_MOSI, GPIO_SCLK, GPIO_CS, GPIO_DC, GPIO_RESET);
-  //  gpio_iomux_out(TFT2_MOSI,FUNC_MTDI_HSPIQ,false);
-  // gpio_iomux_out(TFT2_SCLK,FUNC_MTCK_HSPID,false);
-  gpio_matrix_out(TFT2_MOSI,HSPID_OUT_IDX,false,false);
-  gpio_matrix_out(TFT2_SCLK,HSPICLK_OUT_IDX,false,false);
-  gpio_iomux_out(TFT2_MOSI,FUNC_GPIO18_GPIO18,false);
-  gpio_iomux_out(TFT2_SCLK,FUNC_GPIO5_GPIO5,false);
-  // gpio_matrix_out(TFT2_MOSI,HSPIQ_OUT_IDX,false,false);
-  // gpio_matrix_out(TFT2_SCLK,HSPICLK_OUT_IDX,false,false);
-  //gpio_matrix_out(TFT2_CS,HSPICS0_OUT_IDX,false,false);
-  // gpio_iomux_out(TFT2_CS, FUNC_GPIO4_GPIO4,false);
-  // gpio_iomux_out(TFT2_DC, FUNC_MTDO_GPIO15,false);
-  // gpio_iomux_out(TFT2_RST, FUNC_GPIO33_GPIO33,false);
-	lcdInit(&tft1, CONFIG_WIDTH, CONFIG_HEIGHT, OFFSET_X, OFFSET_Y, false);
-  lcdFillScreen(&tft1, RED);
-	lcdDrawFinish(&tft1);
+      spi_master_init(&tft1, HSPI_HOST, GPIO_MOSI, GPIO_SCLK, GPIO_CS, GPIO_DC, GPIO_RESET);
+      //  gpio_iomux_out(TFT2_MOSI,FUNC_MTDI_HSPIQ,false);
+      // gpio_iomux_out(TFT2_SCLK,FUNC_MTCK_HSPID,false);
+      gpio_matrix_out(TFT2_MOSI,HSPID_OUT_IDX,false,false);
+      gpio_matrix_out(TFT2_SCLK,HSPICLK_OUT_IDX,false,false);
+      gpio_iomux_out(TFT2_MOSI,FUNC_GPIO18_GPIO18,false);
+      gpio_iomux_out(TFT2_SCLK,FUNC_GPIO5_GPIO5,false);
+      // gpio_matrix_out(TFT2_MOSI,HSPIQ_OUT_IDX,false,false);
+      // gpio_matrix_out(TFT2_SCLK,HSPICLK_OUT_IDX,false,false);
+      //gpio_matrix_out(TFT2_CS,HSPICS0_OUT_IDX,false,false);
+      // gpio_iomux_out(TFT2_CS, FUNC_GPIO4_GPIO4,false);
+      // gpio_iomux_out(TFT2_DC, FUNC_MTDO_GPIO15,false);
+      // gpio_iomux_out(TFT2_RST, FUNC_GPIO33_GPIO33,false);
+      lcdInit(&tft1, CONFIG_WIDTH, CONFIG_HEIGHT, OFFSET_X, OFFSET_Y, false);
+      lcdFillScreen(&tft1, RED);
+      lcdDrawFinish(&tft1);
 
-  Serial.println("Init LCD1 Finished");
+      Serial.println("Init LCD1 Finished");
 
-// SPI.end();
-// Serial.println("de-init SPI");
+    // SPI.end();
+    // Serial.println("de-init SPI");
 
-  
-	spi_master_init(&tft2, SPI_HOST, GPIO_MOSI, GPIO_SCLK, TFT2_CS, TFT2_DC, TFT2_RST);
-	lcdInit(&tft2, CONFIG_WIDTH, CONFIG_HEIGHT, OFFSET_X, OFFSET_Y, false);
-  lcdFillScreen(&tft2, GREEN);
-	lcdDrawFinish(&tft2);
+      
+      spi_master_init(&tft2, SPI_HOST, GPIO_MOSI, GPIO_SCLK, TFT2_CS, TFT2_DC, TFT2_RST);
+      lcdInit(&tft2, CONFIG_WIDTH, CONFIG_HEIGHT, OFFSET_X, OFFSET_Y, false);
+      lcdFillScreen(&tft2, GREEN);
+      lcdDrawFinish(&tft2);
 
-  Serial.println("Init LCD2 Finished");
+      Serial.println("Init LCD2 Finished");
 
-  // lcdDrawImage(&tft1, 0,0,128,128,imagetest);
-  // lcdDrawImage(&tft2, 0,0,128,128,rightimage);
+      // lcdDrawImage(&tft1, 0,0,128,128,imagetest);
+      // lcdDrawImage(&tft2, 0,0,128,128,rightimage);
 
-  const uint16_t * leftimg = leftimage;
-  const uint16_t * rightimg = rightimage;
-  lcdDrawFullscreenImage(&tft1,leftimg);
-  lcdDrawFullscreenImage(&tft2,rightimage);
+      lcdDrawFullscreenImage(&tft1,leftimage);
+      lcdDrawFullscreenImage(&tft2,rightimage);
 
-            applyPresetBasedOnDate(); // Apply the new preset
+      applyPresetBasedOnDate(); // Apply the new preset
 
 
 
@@ -305,6 +324,7 @@ class UsermodBCTDWDFK : public Usermod {
     void connected() {
       //Serial.println("Connected to WiFi!");
             timeClient.begin();
+            updateTime();
 
     }
 
@@ -329,26 +349,7 @@ class UsermodBCTDWDFK : public Usermod {
             // Do display update stuff here
 
             // Update the NTP client to get the latest time
-        timeClient.update();
-        
-        // Get the current epoch time and convert it to a tm structure
-        time_t currentEpoch = timeClient.getEpochTime();
-        struct tm *ptm = gmtime((time_t *)&currentEpoch);
-        
-        // Extract the day of the month
-        todayDate = ptm->tm_mday;
-
-          // Check if today's date has changed
-        if (todayDate != lastDate) {
-          lastDate = todayDate; // Update lastDate
-          applyPresetBasedOnDate(); // Apply the new preset
-          updateImages(); // Download new images
-
-        }
-
-        // Optionally, print the date for debugging
-        Serial.print("Today's date: ");
-        Serial.println(todayDate);
+        updateTime();
       }
     }
 
@@ -449,19 +450,19 @@ class UsermodBCTDWDFK : public Usermod {
      */
     void addToConfig(JsonObject& root)
     {
-      JsonObject top = root.createNestedObject(FPSTR(_name));
-      top[FPSTR(_enabled)] = enabled;
-      //save these vars persistently whenever settings are saved
-      top["great"] = userVar0;
-      top["testBool"] = testBool;
-      top["testInt"] = testInt;
-      top["testLong"] = testLong;
-      top["testULong"] = testULong;
-      top["testFloat"] = testFloat;
-      top["testString"] = testString;
-      JsonArray pinArray = top.createNestedArray("pin");
-      pinArray.add(testPins[0]);
-      pinArray.add(testPins[1]); 
+      // JsonObject top = root.createNestedObject(FPSTR(_name));
+      // top[FPSTR(_enabled)] = enabled;
+      // //save these vars persistently whenever settings are saved
+      // top["great"] = userVar0;
+      // top["testBool"] = testBool;
+      // top["testInt"] = testInt;
+      // top["testLong"] = testLong;
+      // top["testULong"] = testULong;
+      // top["testFloat"] = testFloat;
+      // top["testString"] = testString;
+      // JsonArray pinArray = top.createNestedArray("pin");
+      // pinArray.add(testPins[0]);
+      // pinArray.add(testPins[1]); 
     }
 
 
@@ -485,25 +486,25 @@ class UsermodBCTDWDFK : public Usermod {
       // default settings values could be set here (or below using the 3-argument getJsonValue()) instead of in the class definition or constructor
       // setting them inside readFromConfig() is slightly more robust, handling the rare but plausible use case of single value being missing after boot (e.g. if the cfg.json was manually edited and a value was removed)
 
-      JsonObject top = root[FPSTR(_name)];
+      // JsonObject top = root[FPSTR(_name)];
 
-      bool configComplete = !top.isNull();
+      // bool configComplete = !top.isNull();
 
-      configComplete &= getJsonValue(top["great"], userVar0);
-      configComplete &= getJsonValue(top["testBool"], testBool);
-      configComplete &= getJsonValue(top["testULong"], testULong);
-      configComplete &= getJsonValue(top["testFloat"], testFloat);
-      configComplete &= getJsonValue(top["testString"], testString);
+      // configComplete &= getJsonValue(top["great"], userVar0);
+      // configComplete &= getJsonValue(top["testBool"], testBool);
+      // configComplete &= getJsonValue(top["testULong"], testULong);
+      // configComplete &= getJsonValue(top["testFloat"], testFloat);
+      // configComplete &= getJsonValue(top["testString"], testString);
 
-      // A 3-argument getJsonValue() assigns the 3rd argument as a default value if the Json value is missing
-      configComplete &= getJsonValue(top["testInt"], testInt, 42);  
-      configComplete &= getJsonValue(top["testLong"], testLong, -42424242);
+      // // A 3-argument getJsonValue() assigns the 3rd argument as a default value if the Json value is missing
+      // configComplete &= getJsonValue(top["testInt"], testInt, 42);  
+      // configComplete &= getJsonValue(top["testLong"], testLong, -42424242);
 
-      // "pin" fields have special handling in settings page (or some_pin as well)
-      configComplete &= getJsonValue(top["pin"][0], testPins[0], -1);
-      configComplete &= getJsonValue(top["pin"][1], testPins[1], -1);
+      // // "pin" fields have special handling in settings page (or some_pin as well)
+      // configComplete &= getJsonValue(top["pin"][0], testPins[0], -1);
+      // configComplete &= getJsonValue(top["pin"][1], testPins[1], -1);
 
-      return configComplete;
+      //return configComplete;
     }
 
 
@@ -514,11 +515,11 @@ class UsermodBCTDWDFK : public Usermod {
      */
     void appendConfigData()
     {
-      oappend(SET_F("addInfo('")); oappend(String(FPSTR(_name)).c_str()); oappend(SET_F(":great")); oappend(SET_F("',1,'<i>(this is a great config value)</i>');"));
-      oappend(SET_F("addInfo('")); oappend(String(FPSTR(_name)).c_str()); oappend(SET_F(":testString")); oappend(SET_F("',1,'enter any string you want');"));
-      oappend(SET_F("dd=addDropdown('")); oappend(String(FPSTR(_name)).c_str()); oappend(SET_F("','testInt');"));
-      oappend(SET_F("addOption(dd,'Nothing',0);"));
-      oappend(SET_F("addOption(dd,'Everything',42);"));
+      // oappend(SET_F("addInfo('")); oappend(String(FPSTR(_name)).c_str()); oappend(SET_F(":great")); oappend(SET_F("',1,'<i>(this is a great config value)</i>');"));
+      // oappend(SET_F("addInfo('")); oappend(String(FPSTR(_name)).c_str()); oappend(SET_F(":testString")); oappend(SET_F("',1,'enter any string you want');"));
+      // oappend(SET_F("dd=addDropdown('")); oappend(String(FPSTR(_name)).c_str()); oappend(SET_F("','testInt');"));
+      // oappend(SET_F("addOption(dd,'Nothing',0);"));
+      // oappend(SET_F("addOption(dd,'Everything',42);"));
     }
 
 
