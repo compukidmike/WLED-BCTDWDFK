@@ -324,6 +324,8 @@ class UsermodBCTDWDFK : public Usermod {
     void connected() {
       //Serial.println("Connected to WiFi!");
             timeClient.begin();
+            //TODO: Make this a setting that can be changed
+            timeClient.setTimeOffset(-7*3600); // -7 is Utah Mountain Standard Time
             updateTime();
 
     }
