@@ -1048,3 +1048,28 @@ void lcdDrawImage(TFT_t * dev, int x, int y, int width, int height, const uint16
 		}
 	}
 }
+
+void lcdDrawFullscreenImage(TFT_t * dev, const uint16_t * colors){
+	uint16_t _x1 = 0 + dev->_offsetx;
+	uint16_t _x2 = _x1 + dev->_width-1;
+	uint16_t _y1 = 0 + dev->_offsety;
+	uint16_t _y2 = _y1 + dev->_height-1;
+
+	spi_master_write_command(dev, 0x2A);	// set column(x) address
+	spi_master_write_addr(dev, _x1, _x2);
+	spi_master_write_command(dev, 0x2B);	// set Page(y) address
+	spi_master_write_addr(dev, _y1, _y2);
+	spi_master_write_command(dev, 0x2C);	//	Memory Write
+	for(int x=0; x<128; x++){
+		spi_master_write_colors(dev, &colors[x*128], 128);
+		// int size = 128;
+		// static uint8_t Byte[1024];
+		// int index = 0;
+		// for(int i=0;i<size;i++) {
+		// 	Byte[index++] = (colors[i+(x*256)] >> 8) & 0xFF;
+		// 	Byte[index++] = colors[i+(x*256)] & 0xFF;
+		// }
+		// gpio_set_level( dev->_dc, SPI_Data_Mode );
+		// spi_master_write_byte( dev->_SPIHandle, Byte, size*2);
+	}
+}

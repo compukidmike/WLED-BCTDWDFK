@@ -70,6 +70,7 @@ void lcdSetFontUnderLine(TFT_t * dev, uint16_t color);
 void lcdUnsetFontUnderLine(TFT_t * dev);
 void lcdDrawFinish(TFT_t *dev);
 void lcdDrawImage(TFT_t * dev, int x, int y, int width, int height, const uint16_t * colors);
+void lcdDrawFullscreenImage(TFT_t * dev, const uint16_t * colors);
 
 #endif /* MAIN_ST7735_H_ */
 

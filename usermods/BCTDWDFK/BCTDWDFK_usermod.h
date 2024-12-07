@@ -145,43 +145,43 @@ class UsermodBCTDWDFK : public Usermod {
     }
 
 // Function to download a file from a URL and save it to LittleFS
-    bool downloadFile(const char* url, const char* filePath) {
-            WiFiClientSecure client;
-                  client.setInsecure(); // Disable certificate verification
+    //bool downloadFile(const char* url, const char* filePath) {
+      //       WiFiClientSecure client;
+      //             client.setInsecure(); // Disable certificate verification
 
 
-      HTTPClient https;
-      https.begin(client, url);
-      int httpCode = https.GET();
+      // HTTPClient https;
+      // https.begin(client, url);
+      //int httpCode = https.GET();
 
-      if (httpCode == HTTP_CODE_OK) {
-        File file = LittleFS.open(filePath, "w");
-        if (!file) {
-          Serial.println("Failed to open file for writing");
-          https.end();
-          return false;
-        }
+    //   if (httpCode == HTTP_CODE_OK) {
+    //     File file = LittleFS.open(filePath, "w");
+    //     if (!file) {
+    //       Serial.println("Failed to open file for writing");
+    //       https.end();
+    //       return false;
+    //     }
 
-        https.writeToStream(&file);
-        file.close();
-        https.end();
-        Serial.println("File downloaded and saved");
-        return true;
-      } else {
-        Serial.printf("Failed to download file, HTTP code: %d\n", httpCode);
-        https.end();
-        return false;
-      }
-    }
+    //     https.writeToStream(&file);
+    //     file.close();
+    //     https.end();
+    //     Serial.println("File downloaded and saved");
+    //     return true;
+    //   } else {
+    //     Serial.printf("Failed to download file, HTTP code: %d\n", httpCode);
+    //     https.end();
+    //     return false;
+    //   }
+    // }
 
     // Function to check and download the images
     void updateImages() {
-      if (!downloadFile(leftImageUrl, "/leftimage.h")) {
-        Serial.println("Failed to download left image");
-      }
-      if (!downloadFile(rightImageUrl, "/rightimage.h")) {
-        Serial.println("Failed to download right image");
-      }
+      // if (!downloadFile(leftImageUrl, "/leftimage.h")) {
+      //   Serial.println("Failed to download left image");
+      // }
+      // if (!downloadFile(rightImageUrl, "/rightimage.h")) {
+      //   Serial.println("Failed to download right image");
+      // }
     }
 
 
@@ -282,8 +282,13 @@ class UsermodBCTDWDFK : public Usermod {
 
   Serial.println("Init LCD2 Finished");
 
-  lcdDrawImage(&tft1, 0,0,128,128,imagetest);
-  lcdDrawImage(&tft2, 0,0,128,128,rightimage);
+  // lcdDrawImage(&tft1, 0,0,128,128,imagetest);
+  // lcdDrawImage(&tft2, 0,0,128,128,rightimage);
+
+  const uint16_t * leftimg = leftimage;
+  const uint16_t * rightimg = rightimage;
+  lcdDrawFullscreenImage(&tft1,leftimg);
+  lcdDrawFullscreenImage(&tft2,rightimage);
 
             applyPresetBasedOnDate(); // Apply the new preset
 
@@ -319,7 +324,7 @@ class UsermodBCTDWDFK : public Usermod {
       // NOTE: on very long strips strip.isUpdating() may always return true so update accordingly
       //if (!enabled || strip.isUpdating()) return;
 
-      if (millis() - lastUpdate > 1000) {
+      if (millis() - lastUpdate > 100000) {
             lastUpdate = millis();
             // Do display update stuff here
 
